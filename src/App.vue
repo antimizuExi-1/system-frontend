@@ -1,84 +1,59 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import LoginForm from './components/LoginForm.vue'
+import { getMeApi } from './api/authApi'
 
-// 表单数据
-const username = ref('')
-const password = ref('')
-const captcha = ref('')
+// 是否已登录
+const isLogin = ref(false)
 
-// 验证码 svg
-const captchaSvg = ref('')
+// 当前用户信息
+const user = ref(null)
 
-// 获取验证码
-async function loadCaptcha() {
-  const res = await fetch('http://localhost:3000/api/auth/captcha', {
-    credentials: 'include' // ⭐ 非常重要：带 cookie（session）
-  })
-  captchaSvg.value = await res.text()
-}
-
-// 登录
-async function login() {
-  const res = await fetch('http://localhost:3000/api/auth/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    credentials: 'include', // ⭐ 必须
-    body: JSON.stringify({
-      username: username.value,
-      password: password.value,
-      captcha: captcha.value
-    })
-  })
-
-  const data = await res.json()
-  if (data.code === 0) {
-    alert('登录成功')
-    console.log('token:', data.data.token)
-    localStorage.setItem('token', data.data.token)
-  } else {
-    alert(data.message)
-    loadCaptcha() // 失败就刷新验证码
+// 调用后端 /me
+async function fetchMe() {
+  try {
+    const res = await getMeApi()
+    if (res.code === 0) {
+      user.value = res.data
+      isLogin.value = true
+    } else {
+      logout()
+    }
+  } catch (err) {
+    // token 失效 / 过期 / 网络异常
+    logout()
   }
 }
 
-// 页面加载时先获取验证码
-loadCaptcha()
+// 退出登录
+function logout() {
+  localStorage.removeItem('token')
+  user.value = null
+  isLogin.value = false
+}
+
+// 页面加载时，如果有 token，就尝试获取用户信息
+onMounted(() => {
+  if (localStorage.getItem('token')) {
+    fetchMe()
+  }
+})
+
+// 登录成功回调（来自 LoginForm）
+function onLoginSuccess() {
+  fetchMe()
+}
 </script>
 
 <template>
-  <div style="padding: 40px; max-width: 300px">
-    <h2>登录</h2>
+  <div style="padding: 40px;">
+    <!-- 未登录 -->
+    <LoginForm v-if="!isLogin" @success="onLoginSuccess" />
 
-    <div>
-      <input
-        v-model="username"
-        placeholder="用户名"
-      />
+    <!-- 已登录 -->
+    <div v-else>
+      <h2>欢迎你，{{ user.username }}</h2>
+      <button @click="logout">退出登录</button>
     </div>
-
-    <div>
-      <input
-        type="password"
-        v-model="password"
-        placeholder="密码"
-      />
-    </div>
-
-    <div>
-      <input
-        v-model="captcha"
-        placeholder="验证码"
-        style="width: 120px"
-      />
-      <span
-        v-html="captchaSvg"
-        style="cursor: pointer"
-        @click="loadCaptcha"
-      ></span>
-    </div>
-
-    <button @click="login">登录</button>
   </div>
 </template>
