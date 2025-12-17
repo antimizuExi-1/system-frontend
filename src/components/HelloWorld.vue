@@ -39,7 +39,8 @@ const count = ref(0)
 
 <style scoped>
 .read-the-docs {
-  color: #8b2d2d;
+  color: #777;
    /* 点击跳转 */
+   /* 鼠标悬停时改变颜色  测试*/
 }
 </style>
