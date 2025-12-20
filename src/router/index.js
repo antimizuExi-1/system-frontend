@@ -11,22 +11,26 @@ const router = createRouter(
             {
                 path: '/login',
                 name: 'login',
-                component: ()=>import('@/components/LoginForm.vue'),
+                component: () => import('@/components/LoginForm.vue'),
             },
             {
                 path: '/register',
                 name: 'register',
-                component: ()=>import('@/components/RegisterForm.vue'),
+                component: () => import('@/components/RegisterForm.vue'),
             },
             {
                 path: '/welcome',
                 name: 'welcome',
-                component: ()=>import('@/components/Welcome.vue'),
+                component: () => import('@/components/Welcome.vue'),
+            },
+            {
+                path: '/:pathMatch(.*)*',
+                redirect: '/not-found'
             },
             {
                 path: '/not-found',
                 name: 'notFound',
-                component: ()=>import('@/components/NotFound.vue')
+                component: () => import('@/components/NotFound.vue')
             }
         ]
     }
